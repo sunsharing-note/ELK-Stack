@@ -1,0 +1,260 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: kube-system
+spec:
+  ports:
+  - port: 5044
+    targetPort: beats
+  selector:
+    type: logstash
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      type: logstash
+  template:
+    metadata:
+      labels:
+        type: logstash
+        srv: srv-logstash
+    spec:
+      containers:
+      - image: hub-dev.rockontrol.com/docker.io/kubeimages/logstash:7.9.3
+        name: logstash
+        ports:
+        - containerPort: 5044
+          name: beats
+        command:
+        - logstash
+        - '-f'
+        - '/etc/logstash_c/logstash.conf'
+        env:
+        - name: "XPACK_MONITORING_ELASTICSEARCH_HOSTS"
+          value: "http://elasticsearch-logging:9200"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/logstash_c/
+        - name: config-yml-volume
+          mountPath: /usr/share/logstash/config/
+        - name: timezone
+          mountPath: /etc/localtime
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+          requests:
+            cpu: 512m
+            memory: 512Mi
+      imagePullSecrets:
+      - name: huawei-registry
+      volumes:
+      - name: config-volume
+        configMap:
+          name: logstash-conf
+          items:
+          - key: logstash.conf
+            path: logstash.conf
+      - name: timezone
+        hostPath:
+          path: /etc/localtime
+      - name: config-yml-volume
+        configMap:
+          name: logstash-yml
+          items:
+          - key: logstash.yml
+            path: logstash.yml
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-conf
+  namespace: kube-system
+  labels:
+    type: logstash
+data:
+  logstash.conf: |-
+    input {
+      beats {
+      port => 5044
+      }
+     }
+
+     filter{
+     if [kubernetes][container][name] == "nginx-ingress-controller" {
+            json {
+       source => "message"
+       target => "ingress_log"
+     }
+     if [ingress_log][requesttime] {
+         mutate {
+        convert => ["[ingress_log][requesttime]", "float"]
+    }
+    }
+     if [ingress_log][upstremtime] {
+         mutate {
+        convert => ["[ingress_log][upstremtime]", "float"]
+    }
+
+    }
+     if [ingress_log][status] {
+         mutate {
+        convert => ["[ingress_log][status]", "float"]
+    }
+
+    }
+     if  [ingress_log][httphost] and [ingress_log][uri] {
+         mutate {
+        add_field => {"[ingress_log][entry]" => "%{[ingress_log][httphost]}%{[ingress_log][uri]}"}
+
+
+
+    }
+         mutate{
+         split => ["[ingress_log][entry]","/"]
+       }
+         if [ingress_log][entry][1] {
+         mutate{
+         add_field => {"[ingress_log][entrypoint]" => "%{[ingress_log][entry][0]}/%{[ingress_log][entry][1]}"}
+         remove_field => "[ingress_log][entry]"
+         }
+         }
+         else{
+          mutate{
+          add_field => {"[ingress_log][entrypoint]" => "%{[ingress_log][entry][0]}/"}
+          remove_field => "[ingress_log][entry]"
+         }
+         }
+
+
+
+
+    }
+    }
+
+     if [kubernetes][container][name] =~ /^srv*/ {
+       json {
+       source => "message"
+       target => "tmp"
+     }
+
+    if [kubernetes][namespace] == "kube-system" {
+
+       drop{}
+     }
+
+
+       if [tmp][level] {
+       mutate{
+       add_field => {"[applog][level]" => "%{[tmp][level]}"}
+
+     }
+       if [applog][level] == "debug"{
+       drop{}
+     }
+     }
+       if [tmp][msg]{
+      mutate{
+       add_field => {"[applog][msg]" => "%{[tmp][msg]}"}
+     }
+     }
+       if [tmp][func]{
+      mutate{
+       add_field => {"[applog][func]" => "%{[tmp][func]}"}
+     }
+     }
+      if [tmp][cost]{
+        if "ms" in [tmp][cost]{
+
+
+        mutate{
+          split => ["[tmp][cost]","m"]
+          add_field => {"[applog][cost]" => "%{[tmp][cost][0]}"}
+          convert => ["[applog][cost]", "float"]
+        }
+        }
+        else{
+        mutate{
+        add_field => {"[applog][cost]" => "%{[tmp][cost]}"}
+      }
+      }
+     }
+      if [tmp][method]{
+      mutate{
+       add_field => {"[applog][method]" => "%{[tmp][method]}"}
+     }
+     }
+      if [tmp][request_url]{
+      mutate{
+       add_field => {"[applog][request_url]" => "%{[tmp][request_url]}"}
+     }
+     }
+       if [tmp][meta._id]{
+       mutate{
+       add_field => {"[applog][traceId]" => "%{[tmp][meta._id]}"}
+     }
+     }
+
+
+       if [tmp][project] {
+       mutate{
+       add_field => {"[applog][project]" => "%{[tmp][project]}"}
+     }
+     }
+       if [tmp][time] {
+       mutate{
+       add_field => {"[applog][time]" => "%{[tmp][time]}"}
+     }
+     }
+       if [tmp][status] {
+       mutate{
+       add_field => {"[applog][status]" => "%{[tmp][status]}"}
+       convert => ["[applog][status]", "float"]
+     }
+     }
+     }
+
+
+    mutate{
+      rename => ["kubernetes", "k8s"]
+      remove_field => "beat"
+      remove_field => "tmp"
+      remove_field => "[k8s][labels][app]"
+    }
+
+    }
+
+
+    output{
+      elasticsearch {
+
+        hosts => ["http://elasticsearch-logging:9200"]
+
+        codec => json
+
+        index => "logstash-%{+YYYY.MM.dd}"
+
+        }
+      }
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-yml
+  namespace: kube-system
+  labels:
+    type: logstash
+data:
+  logstash.yml: |-
+    http.host: "0.0.0.0"
+    xpack.monitoring.elasticsearch.hosts: http://elasticsearch-logging:9200
