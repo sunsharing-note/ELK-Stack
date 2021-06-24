@@ -46,7 +46,7 @@ spec:
       - name: huawei-registry
       containers:
       - name: kibana
-        image: hub-dev.rockontrol.com/docker.io/kubeimages/kibana:7.9.3
+        image: docker.io/kubeimages/kibana:7.9.3
         resources:
           # need more cpu upon initialization, therefore burstable class
           limits:

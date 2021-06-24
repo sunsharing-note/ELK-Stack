@@ -28,7 +28,7 @@ spec:
         srv: srv-logstash
     spec:
       containers:
-      - image: hub-dev.rockontrol.com/docker.io/kubeimages/logstash:7.9.3
+      - image: docker.io/kubeimages/logstash:7.9.3
         name: logstash
         ports:
         - containerPort: 5044

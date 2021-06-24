@@ -94,7 +94,7 @@ spec:
         beta.kubernetes.io/filebeat-ds-ready: "true"
       containers:
       - name: filebeat
-        image: hub-dev.rockontrol.com/docker.io/kubeimages/filebeat:7.9.3
+        image: docker.io/kubeimages/filebeat:7.9.3
         args: [
           "-c", "/etc/filebeat.yml",
           "-e","-httpprof","0.0.0.0:6060"

@@ -93,7 +93,7 @@ spec:
     spec:
       serviceAccountName: elasticsearch-logging
       containers:
-      - image: hub-dev.rockontrol.com/docker.io/library/elasticsearch:7.9.3
+      - image: docker.io/library/elasticsearch:7.9.3
         name: elasticsearch-logging
         resources:
           # need more cpu upon initialization, therefore burstable class
