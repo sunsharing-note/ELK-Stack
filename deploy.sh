@@ -10,13 +10,16 @@ deployElk(){
 
 
         echo -e "1. 开始进行ELK部署"
-        kubectl apply -f .
+        kubectl apply -f es.yaml
+        kubectl apply -f filebeat.yaml
+        kubectl apply -f logstash.yaml
+        kubectl apply -f kibana.yaml
         
 
         echo -e "-----------------------------"
         echo -e "部署完毕 "
         echo -e "2. 插件ELK Stack各组件的运行情况"
-        echo -e 'kubectl get pod -n elk-system'
+        echo -e 'kubectl get pod -n kube-system'
         
         echo "3. kibana的访问链接"
         echo -e  http://$es_node_ip:25601

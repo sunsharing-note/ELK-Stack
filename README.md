@@ -23,12 +23,4 @@ bash deploy.sh ELK
 
 ## ingress解析
 
-kibana的ingress域名后缀规范
-* 测试环境：rocktl.com
-* 线上环境: rockontrol.com
-* 私有化项目: rktlcloud.com
-
- <集群环境名>.<域名后缀>
-
-例如：xiaodian-bigdatacenter.rktlcloud.com
-
+修改manifests目录下的kibana-ingress.yaml中的域名为自己的域名，然后apply即可
