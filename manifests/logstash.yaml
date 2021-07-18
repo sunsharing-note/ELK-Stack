@@ -54,8 +54,6 @@ spec:
           requests:
             cpu: 512m
             memory: 512Mi
-      imagePullSecrets:
-      - name: huawei-registry
       volumes:
       - name: config-volume
         configMap:

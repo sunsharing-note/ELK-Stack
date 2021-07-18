@@ -12,6 +12,8 @@ Kubernetes中部署ELK Stack收集pod服务日志
   + [x] `filebeat:7.9.3`
   + [x] `kibana:7.9.3`
   + [x] `logstash:7.9.3`
++ 支持的k8s版本
+  + [x] `v1.15.0+以上版本`
 
 # 部署步骤
 

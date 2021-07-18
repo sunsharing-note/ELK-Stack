@@ -137,8 +137,6 @@ spec:
           readOnly: true
         - name: timezone
           mountPath: /etc/localtime
-      imagePullSecrets:
-      - name: huawei-registry
       volumes:
       - name: config
         configMap:

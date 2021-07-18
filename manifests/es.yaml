@@ -73,7 +73,6 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: elasticsearch-logging
-    version: v6.2.5
     kubernetes.io/cluster-service: "true"
     addonmanager.kubernetes.io/mode: Reconcile
     srv: srv-elasticsearch
@@ -83,12 +82,10 @@ spec:
   selector:
     matchLabels:
       k8s-app: elasticsearch-logging
-      version: v6.2.5
   template:
     metadata:
       labels:
         k8s-app: elasticsearch-logging
-        version: v6.2.5
         kubernetes.io/cluster-service: "true"
     spec:
       serviceAccountName: elasticsearch-logging
@@ -122,8 +119,6 @@ spec:
           value: "single-node"
         - name: ES_JAVA_OPTS
           value: "-Xms512m -Xmx2g"
-      imagePullSecrets:
-      - name: huawei-registry
       volumes:
       - name: elasticsearch-logging
         hostPath:

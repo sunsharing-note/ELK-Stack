@@ -42,8 +42,6 @@ spec:
       annotations:
         seccomp.security.alpha.kubernetes.io/pod: 'docker/default'
     spec:
-      imagePullSecrets:
-      - name: huawei-registry
       containers:
       - name: kibana
         image: docker.io/kubeimages/kibana:7.9.3
