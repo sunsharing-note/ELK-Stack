@@ -90,8 +90,6 @@ spec:
     spec:
       serviceAccountName: filebeat
       terminationGracePeriodSeconds: 30
-      nodeSelector:
-        beta.kubernetes.io/filebeat-ds-ready: "true"
       containers:
       - name: filebeat
         image: docker.io/kubeimages/filebeat:7.9.3
